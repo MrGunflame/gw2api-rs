@@ -1,9 +1,9 @@
-use crate::{Endpoint, ListEndpoint};
+use crate::{endpoint, ClientExecutor, RequestBuilder};
+
+use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-
-use std::collections::HashMap;
 
 /// A WvW ability
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -21,20 +21,28 @@ pub struct AbilityRank {
     pub effect: String,
 }
 
-impl Endpoint for Ability {
-    type Value = Vec<u64>;
+impl Ability {
+    pub fn get<C>(client: &C, id: u64) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        let uri = format!("/v2/wvw/abilities?id={}", id);
+        client.send(RequestBuilder::new(uri))
+    }
 
-    const URI: &'static str = "/v2/wvw/abilities";
+    pub fn get_all<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<Self>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/abilities?ids=all"))
+    }
 
-    const IS_AUTHENTICATED: bool = false;
-    const IS_LOCALIZED: bool = true;
-}
-
-impl ListEndpoint for Ability {
-    type Id = u64;
-
-    type SingleValue = Self;
-    type MultiValue = Vec<Self>;
+    pub fn ids<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<u64>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/abilities"))
+    }
 }
 
 /// Details about a WvW match
@@ -111,20 +119,28 @@ pub struct Objective {
     pub guild_upgrades: Option<Vec<u64>>,
 }
 
-impl Endpoint for Match {
-    type Value = Vec<String>;
+impl Match {
+    pub fn get<C>(client: &C, id: &str) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        let uri = format!("/v2/wvw/matches?id={}", id);
+        client.send(RequestBuilder::new(uri))
+    }
 
-    const URI: &'static str = "/v2/wvw/matches";
+    pub fn get_all<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<Self>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/matches?ids=all").localized(true))
+    }
 
-    const IS_AUTHENTICATED: bool = false;
-    const IS_LOCALIZED: bool = false;
-}
-
-impl ListEndpoint for Match {
-    type Id = String;
-
-    type SingleValue = Self;
-    type MultiValue = Vec<Self>;
+    pub fn ids<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<String>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/matches"))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -134,20 +150,28 @@ pub struct Rank {
     pub min_rank: u64,
 }
 
-impl Endpoint for Rank {
-    type Value = Vec<u64>;
+impl Rank {
+    pub fn get<C>(client: &C, id: u64) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        let uri = format!("/v2/wvw/ranks?id={}", id);
+        client.send(RequestBuilder::new(uri).localized(true))
+    }
 
-    const URI: &'static str = "/v2/wvw/ranks";
+    pub fn get_all<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<Self>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/ranks?ids=all").localized(true))
+    }
 
-    const IS_AUTHENTICATED: bool = false;
-    const IS_LOCALIZED: bool = false;
-}
-
-impl ListEndpoint for Rank {
-    type Id = u64;
-
-    type SingleValue = Self;
-    type MultiValue = Vec<Self>;
+    pub fn ids<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Vec<u64>>,
+    {
+        client.send(RequestBuilder::new("/v2/wvw/ranks"))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -170,18 +194,4 @@ pub struct Upgrade {
     pub icon: String,
 }
 
-impl Endpoint for Upgrades {
-    type Value = Vec<u64>;
-
-    const URI: &'static str = "/v2/wvw/upgrades";
-
-    const IS_AUTHENTICATED: bool = false;
-    const IS_LOCALIZED: bool = true;
-}
-
-impl ListEndpoint for Upgrades {
-    type Id = u64;
-
-    type SingleValue = Self;
-    type MultiValue = Vec<Self>;
-}
+endpoint!(Upgrades, "/v2/wvw/upgrades", u64);

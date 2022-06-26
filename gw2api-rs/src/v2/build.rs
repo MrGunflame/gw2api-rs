@@ -1,16 +1,13 @@
-use crate::Endpoint;
+use crate::endpoint;
 
 use serde::{Deserialize, Serialize};
 
+/// The current build id of the game.
+///
+/// *https://api.guildwars2.com/v2/build*
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Build {
     pub id: u64,
 }
 
-impl Endpoint for Build {
-    type Value = Self;
-
-    const URI: &'static str = "/v2/build";
-    const IS_AUTHENTICATED: bool = false;
-    const IS_LOCALIZED: bool = false;
-}
+endpoint!(Build, "/v2/build");

@@ -1,9 +1,15 @@
-use crate::{Builder, Endpoint, ListEndpoint, Result};
+//! Drop in place sync api client.
+//!
+//!
 
+use crate::{private, Builder, ClientExecutor, RequestBuilder, Result};
+
+use serde::de::DeserializeOwned;
 use tokio::runtime::{self, Runtime};
 
 use std::sync::Arc;
 
+/// The synchronous api client.
 #[derive(Clone, Debug)]
 pub struct Client {
     inner: crate::Client,
@@ -27,36 +33,6 @@ impl Client {
             runtime: Arc::new(runtime),
         }
     }
-
-    pub fn get<T>(&self) -> Result<T::Value>
-    where
-        T: Endpoint,
-    {
-        self.runtime.block_on(self.inner.get::<T>())
-    }
-
-    pub fn get_with_id<T, U>(&self, id: U) -> Result<T::SingleValue>
-    where
-        T: ListEndpoint,
-        U: Into<T::Id>,
-    {
-        self.runtime.block_on(self.inner.get_with_id::<T, U>(id))
-    }
-
-    pub fn get_with_ids<T, U>(&self, ids: U) -> Result<T::MultiValue>
-    where
-        T: ListEndpoint,
-        U: AsRef<[T::Id]>,
-    {
-        self.runtime.block_on(self.inner.get_with_ids::<T, U>(ids))
-    }
-
-    pub fn get_all<T>(&self) -> Result<T::MultiValue>
-    where
-        T: ListEndpoint,
-    {
-        self.runtime.block_on(self.inner.get_all::<T>())
-    }
 }
 
 impl From<Builder> for Client {
@@ -66,3 +42,17 @@ impl From<Builder> for Client {
         Self::new_with_inner(inner)
     }
 }
+
+impl<T> ClientExecutor<T> for Client
+where
+    T: DeserializeOwned,
+{
+    type Result = Result<T>;
+
+    fn send(&self, builder: RequestBuilder) -> Self::Result {
+        self.runtime.block_on(self.inner.send(builder))
+    }
+}
+
+#[doc(hidden)]
+impl private::Sealed for Client {}

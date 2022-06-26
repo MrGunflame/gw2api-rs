@@ -4,24 +4,24 @@ use gw2api_rs::v2::wvw::{Ability, Match, Rank, Upgrades};
 
 #[test]
 fn abilities() {
-    CLIENT.get::<Ability>().unwrap();
-    CLIENT.get_all::<Ability>().unwrap();
+    Ability::ids(&*CLIENT).unwrap();
+    Ability::get_all(&*CLIENT).unwrap();
 }
 
 #[test]
 fn ranks() {
-    CLIENT.get::<Rank>().unwrap();
-    CLIENT.get_all::<Rank>().unwrap();
+    Rank::ids(&*CLIENT).unwrap();
+    Rank::get_all(&*CLIENT).unwrap();
 }
 
 #[test]
 fn matches() {
-    CLIENT.get::<Match>().unwrap();
-    CLIENT.get_all::<Match>().unwrap();
+    Match::ids(&*CLIENT).unwrap();
+    Match::get_all(&*CLIENT).unwrap();
 }
 
 #[test]
 fn upgrades() {
-    CLIENT.get::<Upgrades>().unwrap();
-    CLIENT.get_all::<Upgrades>().unwrap();
+    Upgrades::ids(&*CLIENT).unwrap();
+    Upgrades::get_all(&*CLIENT).unwrap();
 }
