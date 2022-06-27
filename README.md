@@ -22,7 +22,7 @@ let build = Build::get(&client).unwrap();
 
 ## Implemented endpoints
 
-- [ ] /v2/achievements
+- [x] /v2/achievements
 - [ ] /v2/achievements/daily
 - [ ] /v2/achievements/daily/tomorrow
 - [ ] /v2/achievements/groups

@@ -194,4 +194,4 @@ pub struct Upgrade {
     pub icon: String,
 }
 
-endpoint!(Upgrades, "/v2/wvw/upgrades", u64);
+endpoint!(Upgrades, "/v2/wvw/upgrades", u64, get_all);

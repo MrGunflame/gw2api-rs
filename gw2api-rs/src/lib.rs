@@ -246,7 +246,7 @@ macro_rules! endpoint {
             }
         }
     };
-    ($target:ty, $path:expr, $id:ty) => {
+    ($target:ty, $path:expr, $id:ty $(,$get_all:tt)?) => {
         impl $target {
             /// Returns the item with the given `id`.
             pub fn get<C>(client: &C, id: $id) -> C::Result
@@ -257,14 +257,20 @@ macro_rules! endpoint {
                 client.send(crate::RequestBuilder::new(uri))
             }
 
+            $(
+
             /// Returns all items.
             pub fn get_all<C>(client: &C) -> C::Result
             where
                 C: crate::ClientExecutor<Vec<Self>>,
             {
+                stringify!($get_all);
+
                 let uri = format!("{}?ids=all", $path);
                 client.send(crate::RequestBuilder::new(uri))
             }
+
+            )?
 
             /// Returns a list of all item ids.
             ///
