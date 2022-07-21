@@ -1,3 +1,21 @@
+//! A wrapper for the official Guild Wars 2 API
+//!
+//! # Usage
+//!
+//! ```
+//! use gw2api_rs::v2::build::Build;
+//! use gw2api_rs::Client;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<Box<<dyn std::error::Error> {
+//!     let client = Client::new();
+//!     let build = Build::get(&client).await?;
+//!
+//!     println!("{}", build.id);
+//!     Ok(())
+//! }
+//! ```
+
 pub mod v2;
 
 #[cfg(feature = "blocking")]
@@ -8,13 +26,11 @@ use hyper_tls::HttpsConnector;
 use serde::de::DeserializeOwned;
 use thiserror::Error;
 
+use std::borrow::Cow;
+use std::fmt::{self, Display, Formatter};
+use std::future::Future;
+use std::pin::Pin;
 use std::task::{Context, Poll};
-use std::{
-    borrow::Cow,
-    fmt::{self, Display, Formatter},
-    future::Future,
-    pin::Pin,
-};
 
 const SCHEMA_VERSION: &str = "2022-03-23T19:00:00.000Z";
 
@@ -27,6 +43,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Creates a new `Client`.
     pub fn new() -> Self {
         let client = hyper::Client::builder().build(HttpsConnector::new());
 
@@ -58,6 +75,7 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Creates a new `Builder`.
     pub fn new() -> Self {
         Self::default()
     }

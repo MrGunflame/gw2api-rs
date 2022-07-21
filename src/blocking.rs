@@ -1,6 +1,21 @@
 //! Drop in place sync api client.
 //!
+//! Requires the `blocking` feature to be enabled.
 //!
+//! # Usage
+//!
+//! ```no_run
+//! use gw2api_rs::v2::build::Build;
+//! use gw2api_rs::blocking::Client;
+//!
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let client = Client::new();
+//!     let build = Build::get(&client)?;
+//!
+//!     println!("{}", build.id);
+//!     Ok(())
+//! }
+//! ```
 
 use crate::{private, Builder, ClientExecutor, RequestBuilder, Result};
 
@@ -17,6 +32,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Creates a new `Client`.
     pub fn new() -> Self {
         Self::new_with_inner(crate::Client::new())
     }
