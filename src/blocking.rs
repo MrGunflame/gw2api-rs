@@ -35,6 +35,13 @@ impl Client {
     }
 }
 
+impl Default for Client {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl From<Builder> for Client {
     fn from(builder: Builder) -> Self {
         let inner = builder.into();

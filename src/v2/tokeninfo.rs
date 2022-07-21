@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 use crate::{Authentication, ClientExecutor, RequestBuilder};
 
 /// Details about an api token.
-///
-/// *https://api.guildwars2.com/v2/tokeninfo*
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TokenInfo {
     /// The unique id of the token.

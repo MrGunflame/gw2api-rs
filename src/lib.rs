@@ -16,7 +16,7 @@ use std::{
     pin::Pin,
 };
 
-const SCHEMA_VERSION: &'static str = "2022-03-23T19:00:00.000Z";
+const SCHEMA_VERSION: &str = "2022-03-23T19:00:00.000Z";
 
 /// The Client for making requests.
 #[derive(Clone, Debug)]
@@ -41,6 +41,13 @@ impl Client {
     #[inline]
     pub fn builder() -> Builder {
         Builder::default()
+    }
+}
+
+impl Default for Client {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -134,7 +141,6 @@ impl RequestBuilder {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Authentication {
     None,
-    Optional,
     Required,
 }
 
@@ -142,16 +148,6 @@ impl Authentication {
     #[inline]
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)
-    }
-
-    #[inline]
-    pub fn is_optional(&self) -> bool {
-        matches!(self, Self::Optional)
-    }
-
-    #[inline]
-    pub fn is_required(&self) -> bool {
-        matches!(self, Self::Required)
     }
 }
 
@@ -303,6 +299,8 @@ macro_rules! endpoint {
             /// # Ok(())
             /// # }
             /// ```
+            ///
+            /// [`blocking`]: crate::blocking
             pub fn ids<C>(client: &C) -> C::Result
             where
                 C: crate::ClientExecutor<Vec<$id>>,
