@@ -108,17 +108,17 @@ let build = Build::get(&client).unwrap();
 - [ ] /v2/skins
 - [ ] /v2/continents
 - [ ] /v2/maps
-- [ ] /v2/build
-- [ ] /v2/colors
-- [ ] /v2/currencies
-- [ ] /v2/dungeons
-- [ ] /v2/files
-- [ ] /v2/quaggans
-- [ ] /v2/minis
-- [ ] /v2/novelties
-- [ ] /v2/raids
-- [ ] /v2/titles
-- [ ] /v2/worlds
+- [x] /v2/build
+- [x] /v2/colors
+- [x] /v2/currencies
+- [x] /v2/dungeons
+- [x] /v2/files
+- [x] /v2/quaggans
+- [x] /v2/minis
+- [x] /v2/novelties
+- [x] /v2/raids
+- [x] /v2/titles
+- [x] /v2/worlds
 - [ ] /v2/backstory/answers
 - [ ] /v2/backstory/questions
 - [ ] /v2/stories
