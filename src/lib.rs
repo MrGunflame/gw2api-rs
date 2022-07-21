@@ -220,6 +220,8 @@ where
         }
         let req = req.body(Body::empty()).unwrap();
 
+        println!("{:?}", req);
+
         let fut = self.client.request(req);
         ResponseFuture(Box::new(async move {
             let resp = fut.await?;

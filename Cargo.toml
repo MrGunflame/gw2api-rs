@@ -12,6 +12,7 @@ publish = true
 [features]
 default = []
 blocking = ["dep:tokio"]
+full = ["blocking"]
 
 [dependencies]
 hyper = { version = "0.14.18", features = ["client", "tcp", "http1", "http2"] }
@@ -21,3 +22,8 @@ serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
 chrono = { version = "0.4.19", features = ["serde"] }
 tokio = { version = "1.18.2", features = ["rt"], optional = true }
+
+[[test]]
+name = "v2"
+path = "tests/v2.rs"
+required-features = ["blocking"]
