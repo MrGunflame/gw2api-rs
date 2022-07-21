@@ -1,11 +1,6 @@
+use std::{cell::UnsafeCell, mem::MaybeUninit, ops::Deref, sync::Once};
+
 use gw2api_rs::{blocking, Builder};
-
-use std::cell::UnsafeCell;
-use std::mem::MaybeUninit;
-use std::ops::Deref;
-use std::sync::Once;
-
-mod v2;
 
 pub static CLIENT: Client = Client::dangling();
 
@@ -15,7 +10,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub const fn dangling() -> Self {
+    const fn dangling() -> Self {
         Self {
             once: Once::new(),
             inner: UnsafeCell::new(MaybeUninit::uninit()),
@@ -28,10 +23,10 @@ impl Deref for Client {
 
     fn deref(&self) -> &Self::Target {
         self.once.call_once(|| {
+            // SAFETY: Client can only be accessed by a single thread.
             let inner = unsafe { &mut *self.inner.get() };
 
             let mut builder = Builder::new();
-
             if let Ok(access_token) = std::env::var("APIKEY") {
                 builder = builder.access_token(access_token);
             }
@@ -39,11 +34,8 @@ impl Deref for Client {
             inner.write(builder.into());
         });
 
-        unsafe {
-            let ptr = &*self.inner.get();
-
-            ptr.assume_init_ref()
-        }
+        // SAFETY: Client is properly initialized.
+        unsafe { (&*self.inner.get()).assume_init_ref() }
     }
 }
 

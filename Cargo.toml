@@ -1,2 +1,2 @@
 [workspace]
-members = ["gw2api-rs", "gw2api-rs-test"]
+members = ["gw2api-rs"]
