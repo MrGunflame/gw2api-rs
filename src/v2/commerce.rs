@@ -55,6 +55,7 @@ impl Delivery {
     /// # }
     /// ```
     ///
+    /// [`Error`]: struct@crate::Error
     /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
@@ -335,6 +336,7 @@ impl CurrentTransactions {
     /// # }
     /// ```
     ///
+    /// [`Error`]: struct@crate::Error
     /// [`blocking`]: crate::blocking
     pub fn buys<C>(client: &C) -> C::Result
     where
@@ -381,6 +383,7 @@ impl CurrentTransactions {
     /// # }
     /// ```
     ///
+    /// [`Error`]: struct@crate::Error
     /// [`blocking`]: crate::blocking
     pub fn sells<C>(client: &C) -> C::Result
     where
@@ -448,6 +451,7 @@ impl HistoryTransactions {
     /// # }
     /// ```
     ///
+    /// [`Error`]: struct@crate::Error
     /// [`blocking`]: crate::blocking
     pub fn buys<C>(client: &C) -> C::Result
     where
@@ -495,6 +499,7 @@ impl HistoryTransactions {
     /// # }
     /// ```
     ///
+    /// [`Error`]: struct@crate::Error
     /// [`blocking`]: crate::blocking
     pub fn sells<C>(client: &C) -> C::Result
     where
