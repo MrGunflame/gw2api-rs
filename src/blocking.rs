@@ -37,6 +37,11 @@ impl Client {
         Self::new_with_inner(crate::Client::new())
     }
 
+    #[inline]
+    pub fn builder() -> Builder {
+        Builder::new()
+    }
+
     fn new_with_inner(inner: crate::Client) -> Self {
         let runtime = runtime::Builder::new_current_thread()
             .enable_io()

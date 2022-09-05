@@ -24,6 +24,7 @@ pub mod blocking;
 use hyper::{client::connect::HttpConnector, header::AUTHORIZATION, Body, Request};
 use hyper_tls::HttpsConnector;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use thiserror::Error;
 
 use std::borrow::Cow;
@@ -81,8 +82,11 @@ impl Builder {
         Self::default()
     }
 
-    pub fn access_token(mut self, access_token: String) -> Self {
-        self.access_token = Some(access_token);
+    pub fn access_token<T>(mut self, access_token: T) -> Self
+    where
+        T: ToString,
+    {
+        self.access_token = Some(access_token.to_string());
         self
     }
 
@@ -135,11 +139,19 @@ impl Error {
 #[derive(Debug, Error)]
 enum ErrorKind {
     #[error(transparent)]
+    Api(#[from] ApiError),
+    #[error(transparent)]
     Http(#[from] hyper::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error("no access token")]
     NoAccessToken,
+}
+
+#[derive(Clone, Debug, Error, Deserialize)]
+#[error("api error: {text}")]
+struct ApiError {
+    text: String,
 }
 
 /// A builder for creating endpoint requests.
@@ -218,13 +230,13 @@ impl Display for Language {
 
 /// A wrapper around a future returned by the async client.
 #[must_use = "futures do nothing unless polled"]
-#[repr(transparent)]
 pub struct ResponseFuture<T>
 where
     T: DeserializeOwned,
 {
     state: State<T>,
     _marker: PhantomData<T>,
+    is_error: bool,
 }
 
 impl<T> ResponseFuture<T>
@@ -235,6 +247,7 @@ where
         Self {
             state: State::Response(fut),
             _marker: PhantomData,
+            is_error: false,
         }
     }
 
@@ -242,6 +255,7 @@ where
         Self {
             state: State::Result(Some(res)),
             _marker: PhantomData,
+            is_error: false,
         }
     }
 }
@@ -276,6 +290,11 @@ where
                     Poll::Pending => Poll::Pending,
                     Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
                     Poll::Ready(Ok(resp)) => {
+                        if !resp.status().is_success() {
+                            self.is_error = true;
+                        }
+                        let is_error = self.is_error;
+
                         self.state =
                             State::Body(Box::pin(async move { hyper::body::to_bytes(resp).await }));
 
@@ -289,10 +308,19 @@ where
                         match fut.poll(cx) {
                             Poll::Pending => Poll::Pending,
                             Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
-                            Poll::Ready(Ok(buf)) => match serde_json::from_slice(&buf) {
-                                Ok(st) => Poll::Ready(Ok(st)),
-                                Err(err) => Poll::Ready(Err(Error::from(err))),
-                            },
+                            Poll::Ready(Ok(buf)) => {
+                                if is_error {
+                                    return match serde_json::from_slice::<ApiError>(&buf) {
+                                        Ok(st) => Poll::Ready(Err(Error::from(st))),
+                                        Err(err) => Poll::Ready(Err(Error::from(err))),
+                                    };
+                                }
+
+                                match serde_json::from_slice(&buf) {
+                                    Ok(st) => Poll::Ready(Ok(st)),
+                                    Err(err) => Poll::Ready(Err(Error::from(err))),
+                                }
+                            }
                         }
                     }
                 }
@@ -302,10 +330,19 @@ where
                 match fut.poll(cx) {
                     Poll::Pending => Poll::Pending,
                     Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
-                    Poll::Ready(Ok(buf)) => match serde_json::from_slice(&buf) {
-                        Ok(st) => Poll::Ready(Ok(st)),
-                        Err(err) => Poll::Ready(Err(Error::from(err))),
-                    },
+                    Poll::Ready(Ok(buf)) => {
+                        if self.is_error {
+                            return match serde_json::from_slice::<ApiError>(&buf) {
+                                Ok(st) => Poll::Ready(Err(Error::from(st))),
+                                Err(err) => Poll::Ready(Err(Error::from(err))),
+                            };
+                        }
+
+                        match serde_json::from_slice(&buf) {
+                            Ok(st) => Poll::Ready(Ok(st)),
+                            Err(err) => Poll::Ready(Err(Error::from(err))),
+                        }
+                    }
                 }
             }
             State::Result(res) => Poll::Ready(res.take().unwrap()),

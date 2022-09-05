@@ -5,6 +5,7 @@
 pub mod achievements;
 pub mod build;
 pub mod colors;
+pub mod commerce;
 pub mod currencies;
 pub mod dungeons;
 pub mod files;

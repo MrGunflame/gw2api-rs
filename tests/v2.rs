@@ -36,6 +36,47 @@ mod colors {
     }
 }
 
+mod commerce {
+    use gw2api_rs::v2::commerce::{
+        CurrentTransactions, Delivery, Exchange, HistoryTransactions, Listings, Prices,
+    };
+
+    use crate::support::CLIENT;
+
+    #[test]
+    fn test_delivery() {
+        Delivery::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_exchange() {
+        Exchange::coins(&*CLIENT, 10000).unwrap();
+        Exchange::gems(&*CLIENT, 10000).unwrap();
+    }
+
+    #[test]
+    fn test_listings() {
+        Listings::ids(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_prices() {
+        Prices::ids(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_current_transactions() {
+        CurrentTransactions::buys(&*CLIENT).unwrap();
+        CurrentTransactions::sells(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_history_transactions() {
+        HistoryTransactions::buys(&*CLIENT).unwrap();
+        HistoryTransactions::sells(&*CLIENT).unwrap();
+    }
+}
+
 mod currencies {
     use gw2api_rs::v2::currencies::Currency;
 
