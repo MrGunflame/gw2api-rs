@@ -124,6 +124,24 @@ mod files {
     }
 }
 
+mod guild {
+    use gw2api_rs::v2::guild::{GuildMembers, GuildRanks};
+
+    use crate::support::CLIENT;
+
+    const GUILD_ID: &str = "14762DCE-C2A4-E711-80D5-441EA14F1E44";
+
+    #[test]
+    fn test_guild_members() {
+        GuildMembers::get(&*CLIENT, GUILD_ID).unwrap();
+    }
+
+    #[test]
+    fn test_guild_ranks() {
+        GuildRanks::get(&*CLIENT, GUILD_ID).unwrap();
+    }
+}
+
 mod minis {
     use gw2api_rs::v2::minis::Mini;
 
