@@ -107,16 +107,23 @@ impl Account {
 }
 
 /// A list of content an [`Account`] has access to.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AccountAccess(u8);
 
 impl AccountAccess {
-    const NONE: u8 = 0;
-    const PLAY_FOR_FREE: u8 = 1;
-    const GUILD_WARS_2: u8 = 1 << 1;
-    const HEART_OF_THORNS: u8 = 1 << 2;
-    const PATH_OF_FIRE: u8 = 1 << 3;
-    const END_OF_DRAGONS: u8 = 1 << 4;
+    const NONE: u8 = 1 << 0;
+    const PLAY_FOR_FREE: u8 = 1 << 1;
+    const GUILD_WARS_2: u8 = 1 << 2;
+    const HEART_OF_THORNS: u8 = 1 << 3;
+    const PATH_OF_FIRE: u8 = 1 << 4;
+    const END_OF_DRAGONS: u8 = 1 << 5;
+
+    const NONE_STR: &'static str = "None";
+    const PLAY_FOR_FREE_STR: &'static str = "PlayForFree";
+    const GUILD_WARS_2_STR: &'static str = "GuildWars2";
+    const HEART_OF_THORNS_STR: &'static str = "HeartOfThorns";
+    const PATH_OF_FIRE_STR: &'static str = "PathOfFire";
+    const END_OF_DRAGONS_STR: &'static str = "EndOfDragons";
 
     #[inline]
     fn len(&self) -> usize {
@@ -125,7 +132,7 @@ impl AccountAccess {
 
     /// Returns `true` if the account has no access.
     ///
-    /// Note that this likely shouldn't never happen.
+    /// Note that this probably shouldn't ever happen.
     #[inline]
     pub fn none(&self) -> bool {
         self.0 & Self::NONE != 0
@@ -169,28 +176,28 @@ impl Serialize for AccountAccess {
     {
         let mut seq = serializer.serialize_seq(Some(self.len()))?;
 
-        if self.0 & Self::NONE != 0 {
-            seq.serialize_element("None")?;
+        // if self.none() {
+        //     seq.serialize_element(Self::NONE_STR)?;
+        // }
+
+        if self.play_for_free() {
+            seq.serialize_element(Self::PLAY_FOR_FREE_STR)?;
         }
 
-        if self.0 & Self::PLAY_FOR_FREE != 0 {
-            seq.serialize_element("PlayForFree")?;
+        if self.guild_wars_2() {
+            seq.serialize_element(Self::GUILD_WARS_2_STR)?;
         }
 
-        if self.0 & Self::GUILD_WARS_2 != 0 {
-            seq.serialize_element("GuildWars2")?;
+        if self.heart_of_thorns() {
+            seq.serialize_element(Self::HEART_OF_THORNS_STR)?;
         }
 
-        if self.0 & Self::HEART_OF_THORNS != 0 {
-            seq.serialize_element("HeartOfThorns")?;
+        if self.path_of_fire() {
+            seq.serialize_element(Self::PATH_OF_FIRE_STR)?;
         }
 
-        if self.0 & Self::PATH_OF_FIRE != 0 {
-            seq.serialize_element("PathOfFire")?;
-        }
-
-        if self.0 & Self::END_OF_DRAGONS != 0 {
-            seq.serialize_element("EndOfDragons")?;
+        if self.end_of_dragons() {
+            seq.serialize_element(Self::END_OF_DRAGONS_STR)?;
         }
 
         seq.end()
@@ -208,7 +215,7 @@ impl<'de> Deserialize<'de> for AccountAccess {
             type Value = AccountAccess;
 
             fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                formatter.write_str("sequence")
+                formatter.write_str("a sequence of access strings")
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -221,12 +228,24 @@ impl<'de> Deserialize<'de> for AccountAccess {
                     let elem = seq.next_element::<&str>()?;
 
                     match elem {
-                        Some("None") => state |= AccountAccess::NONE,
-                        Some("PlayForFree") => state |= AccountAccess::PLAY_FOR_FREE,
-                        Some("GuildWars2") => state |= AccountAccess::GUILD_WARS_2,
-                        Some("HeartOfThorns") => state |= AccountAccess::HEART_OF_THORNS,
-                        Some("PathOfFire") => state |= AccountAccess::PATH_OF_FIRE,
-                        Some("EndOfDragons") => state |= AccountAccess::END_OF_DRAGONS,
+                        Some(AccountAccess::NONE_STR) => {
+                            state |= AccountAccess::NONE;
+                        }
+                        Some(AccountAccess::PLAY_FOR_FREE_STR) => {
+                            state |= AccountAccess::PLAY_FOR_FREE;
+                        }
+                        Some(AccountAccess::GUILD_WARS_2_STR) => {
+                            state |= AccountAccess::GUILD_WARS_2;
+                        }
+                        Some(AccountAccess::HEART_OF_THORNS_STR) => {
+                            state |= AccountAccess::HEART_OF_THORNS;
+                        }
+                        Some(AccountAccess::PATH_OF_FIRE_STR) => {
+                            state |= AccountAccess::PATH_OF_FIRE;
+                        }
+                        Some(AccountAccess::END_OF_DRAGONS_STR) => {
+                            state |= AccountAccess::END_OF_DRAGONS;
+                        }
                         Some(_) => return Err(A::Error::custom("invalid account access")),
                         None => return Ok(AccountAccess(state)),
                     }
