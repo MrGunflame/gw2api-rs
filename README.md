@@ -28,7 +28,7 @@ let build = Build::get(&client).unwrap();
 - [ ] /v2/achievements/groups
 - [ ] /v2/achievements/categories
 
-- [ ] /v2/account
+- [x] /v2/account
 - [ ] /v2/account/achievements
 - [ ] /v2/account/bank
 - [ ] /v2/account/dailycrafting
