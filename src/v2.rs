@@ -2,6 +2,7 @@
 //!
 //! Types for the [v2](https://api.guildwars2.com/v2) endpoint.
 
+pub mod account;
 pub mod achievements;
 pub mod build;
 pub mod colors;

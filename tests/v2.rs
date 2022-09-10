@@ -1,5 +1,16 @@
 mod support;
 
+mod account {
+    use gw2api_rs::v2::account::Account;
+
+    use crate::support::CLIENT;
+
+    #[test]
+    fn test_account() {
+        Account::get(&*CLIENT).unwrap();
+    }
+}
+
 mod achievements {
     use gw2api_rs::v2::achievements::Achievement;
 
