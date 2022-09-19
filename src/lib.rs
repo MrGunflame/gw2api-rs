@@ -16,6 +16,7 @@
 //! }
 //! ```
 
+mod rate_limit;
 pub mod v2;
 
 #[cfg(feature = "blocking")]
@@ -23,6 +24,7 @@ pub mod blocking;
 
 use hyper::{client::connect::HttpConnector, header::AUTHORIZATION, Body, Request};
 use hyper_tls::HttpsConnector;
+use rate_limit::RateLimiter;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use thiserror::Error;
@@ -30,8 +32,8 @@ use thiserror::Error;
 use std::borrow::Cow;
 use std::fmt::{self, Display, Formatter};
 use std::future::Future;
-use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
 const SCHEMA_VERSION: &str = "2022-03-23T19:00:00.000Z";
@@ -42,6 +44,7 @@ pub struct Client {
     client: hyper::Client<HttpsConnector<HttpConnector>>,
     access_token: Option<String>,
     language: Language,
+    rate_limiter: Option<Arc<RateLimiter>>,
 }
 
 impl Client {
@@ -53,6 +56,7 @@ impl Client {
             client,
             access_token: None,
             language: Language::default(),
+            rate_limiter: None,
         }
     }
 
@@ -102,7 +106,7 @@ where
 {
     type Result;
 
-    fn send(&self, request: RequestBuilder) -> Self::Result;
+    fn send(self, request: RequestBuilder) -> Self::Result;
 }
 
 pub(crate) mod private {
@@ -230,32 +234,148 @@ impl Display for Language {
 
 /// A wrapper around a future returned by the async client.
 #[must_use = "futures do nothing unless polled"]
-pub struct ResponseFuture<T>
+pub struct ResponseFuture<'a, T>
 where
     T: DeserializeOwned,
 {
+    client: &'a Client,
     state: State<T>,
-    _marker: PhantomData<T>,
     is_error: bool,
 }
 
-impl<T> ResponseFuture<T>
+impl<'a, T> ResponseFuture<'a, T>
 where
     T: DeserializeOwned,
 {
-    fn new(fut: hyper::client::ResponseFuture) -> Self {
+    fn new(client: &'a Client, fut: hyper::client::ResponseFuture) -> Self {
         Self {
+            client,
             state: State::Response(fut),
-            _marker: PhantomData,
             is_error: false,
         }
     }
 
-    fn result(res: Result<T>) -> Self {
+    fn result(client: &'a Client, res: Result<T>) -> Self {
         Self {
+            client,
             state: State::Result(Some(res)),
-            _marker: PhantomData,
             is_error: false,
+        }
+    }
+
+    fn poll_waiting(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<T>> {
+        #[cfg(debug_assertions)]
+        assert!(matches!(self.state, State::Waiting(_)));
+
+        match self.state {
+            State::Waiting(fut) => {
+                if let Some(rate_limiter) = self.client.rate_limiter {
+                    if rate_limiter.poll_ready(cx).is_pending() {
+                        return Poll::Pending;
+                    }
+                }
+
+                self.state = State::Response(fut);
+                self.poll_response(cx)
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn poll_response(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<T>> {
+        #[cfg(debug_assertions)]
+        assert!(matches!(self.state, State::Response(_)));
+
+        match self.state {
+            State::Response(fut) => {
+                let fut = unsafe {
+                    self.as_mut()
+                        .map_unchecked_mut(|this| match &mut this.state {
+                            State::Response(resp) => resp,
+                            _ => unreachable!(),
+                        })
+                };
+
+                match fut.poll(cx) {
+                    Poll::Pending => Poll::Pending,
+                    Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
+                    Poll::Ready(Ok(resp)) => {
+                        if !resp.status().is_success() {
+                            self.is_error = true;
+                        }
+                        let is_error = self.is_error;
+
+                        self.state =
+                            State::Body(Box::pin(async move { hyper::body::to_bytes(resp).await }));
+
+                        let fut = unsafe {
+                            self.map_unchecked_mut(|this| match &mut this.state {
+                                State::Body(body) => body,
+                                _ => unreachable!(),
+                            })
+                        };
+
+                        match fut.poll(cx) {
+                            Poll::Pending => Poll::Pending,
+                            Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
+                            Poll::Ready(Ok(buf)) => {
+                                if is_error {
+                                    return match serde_json::from_slice::<ApiError>(&buf) {
+                                        Ok(st) => Poll::Ready(Err(Error::from(st))),
+                                        Err(err) => Poll::Ready(Err(Error::from(err))),
+                                    };
+                                }
+
+                                match serde_json::from_slice(&buf) {
+                                    Ok(st) => Poll::Ready(Ok(st)),
+                                    Err(err) => Poll::Ready(Err(Error::from(err))),
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn poll_body(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<T>> {
+        #[cfg(debug_assertions)]
+        assert!(matches!(self.state, State::Body(_)));
+
+        match self.state {
+            State::Body(fut) => {
+                let fut = fut.as_mut();
+
+                match fut.poll(cx) {
+                    Poll::Pending => Poll::Pending,
+                    Poll::Ready(Err(err)) => Poll::Ready(Err(Error::from(err))),
+                    Poll::Ready(Ok(buf)) => {
+                        if self.is_error {
+                            return match serde_json::from_slice::<ApiError>(&buf) {
+                                Ok(st) => Poll::Ready(Err(Error::from(st))),
+                                Err(err) => Poll::Ready(Err(Error::from(err))),
+                            };
+                        }
+
+                        match serde_json::from_slice(&buf) {
+                            Ok(st) => Poll::Ready(Ok(st)),
+                            Err(err) => Poll::Ready(Err(Error::from(err))),
+                        }
+                    }
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn poll_result(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<T>> {
+        #[cfg(debug_assertions)]
+        assert!(matches!(self.state, State::Result(_)));
+
+        match self.state {
+            State::Result(res) => Poll::Ready(res.take().unwrap()),
+            _ => unreachable!(),
         }
     }
 }
@@ -264,12 +384,14 @@ enum State<T>
 where
     T: DeserializeOwned,
 {
+    /// Waiting for rate limit.
+    Waiting(hyper::client::ResponseFuture),
     Response(hyper::client::ResponseFuture),
     Body(Pin<Box<dyn Future<Output = hyper::Result<hyper::body::Bytes>> + Send + Sync + 'static>>),
     Result(Option<Result<T>>),
 }
 
-impl<T> Future for ResponseFuture<T>
+impl<'a, T> Future for ResponseFuture<'a, T>
 where
     T: DeserializeOwned,
 {
@@ -277,6 +399,7 @@ where
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match &mut self.state {
+            State::Waiting(_) => self.poll_waiting(cx),
             State::Response(_) => {
                 let fut = unsafe {
                     self.as_mut()
@@ -350,22 +473,24 @@ where
     }
 }
 
-impl<T> Unpin for ResponseFuture<T> where T: DeserializeOwned {}
+impl<'a, T> Unpin for ResponseFuture<'a, T> where T: DeserializeOwned {}
 
-impl<T> ClientExecutor<T> for Client
+impl<'a, T> ClientExecutor<T> for Client
 where
     T: DeserializeOwned,
 {
-    type Result = ResponseFuture<T>;
+    type Result = ResponseFuture<'a, T>;
 
-    fn send(&self, builder: RequestBuilder) -> Self::Result {
+    fn send(self, builder: RequestBuilder) -> Self::Result {
         let mut req = Request::builder().uri(format!("https://api.guildwars2.com{}", builder.uri));
         req = req.header("X-Schema-Version", SCHEMA_VERSION);
 
         if !builder.authentication.is_none() {
             let access_token = match &self.access_token {
                 Some(access_token) => access_token,
-                None => return ResponseFuture::result(Err(Error::from(ErrorKind::NoAccessToken))),
+                None => {
+                    return ResponseFuture::result(self, Err(Error::from(ErrorKind::NoAccessToken)))
+                }
             };
 
             req = req.header(AUTHORIZATION, format!("Bearer {}", access_token));
@@ -373,12 +498,12 @@ where
         let req = req.body(Body::empty()).unwrap();
 
         let fut = self.client.request(req);
-        ResponseFuture::new(fut)
+        ResponseFuture::new(self, fut)
     }
 }
 
 #[doc(hidden)]
-impl private::Sealed for Client {}
+impl<'a> private::Sealed for &'a Client {}
 
 macro_rules! endpoint {
     // Basic endpoint (single path, no ids)

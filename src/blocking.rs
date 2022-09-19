@@ -71,16 +71,16 @@ impl From<Builder> for Client {
     }
 }
 
-impl<T> ClientExecutor<T> for Client
+impl<'a, T> ClientExecutor<T> for &'a Client
 where
     T: DeserializeOwned,
 {
     type Result = Result<T>;
 
-    fn send(&self, builder: RequestBuilder) -> Self::Result {
+    fn send(self, builder: RequestBuilder) -> Self::Result {
         self.runtime.block_on(self.inner.send(builder))
     }
 }
 
 #[doc(hidden)]
-impl private::Sealed for Client {}
+impl<'a> private::Sealed for &'a Client {}
