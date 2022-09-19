@@ -1,13 +1,72 @@
 mod support;
 
 mod account {
-    use gw2api_rs::v2::account::Account;
+    use gw2api_rs::v2::account::{
+        Account, AccountAchievements, AccountBank, AccountDailyCrafting, AccountDungeons,
+        AccountDyes, AccountFinishers, AccountGliders, AccountHomeCats, AccountHomeNodes,
+        AccountInventory, AccountLuck,
+    };
 
     use crate::support::CLIENT;
 
     #[test]
     fn test_account() {
         Account::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_achievements() {
+        AccountAchievements::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_bank() {
+        AccountBank::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_daily_crafting() {
+        AccountDailyCrafting::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_dungeons() {
+        AccountDungeons::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_dyes() {
+        AccountDyes::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_finishers() {
+        AccountFinishers::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_gliders() {
+        AccountGliders::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_home_cats() {
+        AccountHomeCats::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_home_nodes() {
+        AccountHomeNodes::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_inventory() {
+        AccountInventory::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_luck() {
+        AccountLuck::get(&*CLIENT).unwrap();
     }
 }
 
