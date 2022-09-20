@@ -1,3 +1,5 @@
+//! Exposes details about player accounts. All endpoints in this module required authentication.
+
 use std::collections::HashMap;
 use std::fmt::{self, Formatter};
 
@@ -258,6 +260,7 @@ impl<'de> Deserialize<'de> for AccountAccess {
     }
 }
 
+/// A list of achievements unlocked by the account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountAchievements(pub Vec<AccountAchievement>);
@@ -265,6 +268,47 @@ pub struct AccountAchievements(pub Vec<AccountAchievement>);
 impl AccountAchievements {
     const URI: &'static str = "/v2/account/achievements";
 
+    /// Returns a list of achievements unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of achievements unlocked by the account of the current
+    /// access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountAchievements;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let achievements = AccountAchievements::get(&client).await?;
+    /// println!("{:?}", achievements);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountAchievements;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let achievements = AccountAchievements::get(&client)?;
+    /// println!("{:?}", achievements);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -273,6 +317,7 @@ impl AccountAchievements {
     }
 }
 
+/// An achievement unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccountAchievement {
     /// The id of the achievement.
@@ -301,7 +346,7 @@ impl AccountAchievement {
     }
 }
 
-/// A list of items stored in the accounts bank/vault.
+/// A list of items stored in the account's bank/vault.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountBank(pub Vec<Option<BankItem>>);
@@ -309,6 +354,44 @@ pub struct AccountBank(pub Vec<Option<BankItem>>);
 impl AccountBank {
     const URI: &'static str = "/v2/account/bank";
 
+    /// Returns a list of items stored in the account's bank.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns the account's bank of the current access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountBank;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let bank = AccountBank::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountBank;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let bank = AccountBank::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -317,17 +400,28 @@ impl AccountBank {
     }
 }
 
+/// A single item stored in an [`AccountBank`].
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BankItem {
+    /// The id of the item.
     pub id: u64,
+    /// The number of items stored on this stack.
     pub count: u16,
+    /// The number of charges remaining on this item. Only avaliable for some items.
     pub charges: Option<u64>,
+    /// The id of the skin applied on this item. Only avaliable for some items.
     pub skin: Option<u64>,
+    /// A list of ids of dyes applied on this item. Only avaliable for some items.
     pub dyes: Option<Vec<u64>>,
+    /// A list of upgrades applied on this item. Only avaliable for some items.
     pub upgrades: Option<Vec<u64>>,
     pub upgrade_slot_indices: Option<Vec<u64>>,
+    /// A list of infusions applied on this item. Only avaliable for some items.
     pub infusions: Option<Vec<u64>>,
+    /// Whom the item is bound to. If `None` the item is not bound at all.
     pub binding: Option<ItemBinding>,
+    /// The name of the character the item is bound to. Only avaliable if `binding` is
+    /// `Character`.
     pub bound_to: Option<String>,
     pub stats: Option<Vec<ItemStats>>,
 }
@@ -344,6 +438,7 @@ pub struct ItemStats {
     pub attributes: HashMap<String, f64>,
 }
 
+/// A list of items that have been crafted by the account since daily reset.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountDailyCrafting(pub Vec<String>);
@@ -351,6 +446,46 @@ pub struct AccountDailyCrafting(pub Vec<String>);
 impl AccountDailyCrafting {
     const URI: &'static str = "/v2/account/dailycrafting";
 
+    /// Returns a list of items that have been crafted by the currently authenticated account since
+    /// daily reset.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of items crafted by the account of the current access
+    /// token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountDailyCrafting;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let items = AccountDailyCrafting::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountDailyCrafting;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let items = AccountDailyCrafting::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -359,12 +494,53 @@ impl AccountDailyCrafting {
     }
 }
 
+/// A list of dungeon paths completed since daily reset.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccountDungeons(pub Vec<String>);
 
 impl AccountDungeons {
     const URI: &'static str = "/v2/account/dungeons";
 
+    /// Returns a list of dungeon paths completed by the currently authenticatd account since the
+    /// daily reset.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of dungeon paths completed by the account of the
+    /// current access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountDungeons;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let paths = AccountDungeons::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountDungeons;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let paths = AccountDungeons::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -373,7 +549,7 @@ impl AccountDungeons {
     }
 }
 
-/// A list of dye ids unlocked of account.
+/// A list of dyes unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountDyes(pub Vec<u64>);
@@ -381,6 +557,44 @@ pub struct AccountDyes(pub Vec<u64>);
 impl AccountDyes {
     const URI: &'static str = "/v2/account/dyes";
 
+    /// Returns a list of dyes unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns the dyes unlocked by the account of the current access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountDyes;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let dyes = AccountDyes::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountDyes;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let dyes = AccountDyes::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -397,6 +611,45 @@ pub struct AccountFinishers(pub Vec<AccountFinisher>);
 impl AccountFinishers {
     const URI: &'static str = "/v2/account/finishers";
 
+    /// Returns a list of finishers unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of finishers unlocked by the account of the current
+    /// access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountFinishers;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let finishers = AccountFinishers::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountFinishers;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let finishers = AccountFinishers::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -405,6 +658,7 @@ impl AccountFinishers {
     }
 }
 
+/// A single finisher unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccountFinisher {
     /// The id of the finisher.
@@ -426,6 +680,7 @@ impl AccountFinisher {
     }
 }
 
+/// A list of gliders unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountGliders(pub Vec<u64>);
@@ -433,6 +688,45 @@ pub struct AccountGliders(pub Vec<u64>);
 impl AccountGliders {
     const URI: &'static str = "/v2/account/gliders";
 
+    /// Returns a list of gliders unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of gliders unlocked by the account of the current
+    /// access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountGliders;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let gliders = AccountGliders::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountGliders;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let gliders = AccountGliders::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -441,6 +735,7 @@ impl AccountGliders {
     }
 }
 
+/// A list of home cats unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountHomeCats(pub Vec<u64>);
@@ -448,6 +743,45 @@ pub struct AccountHomeCats(pub Vec<u64>);
 impl AccountHomeCats {
     const URI: &'static str = "/v2/account/home/cats";
 
+    /// Returns a list of home cats unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of home cats unlocked by the account of the current
+    /// access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountHomeCats;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let cats = AccountHomeCats::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountHomeCats;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let cats = AccountHomeCats::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -456,6 +790,7 @@ impl AccountHomeCats {
     }
 }
 
+/// A list of home nodes unlocked by an account.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountHomeNodes(pub Vec<String>);
@@ -463,6 +798,45 @@ pub struct AccountHomeNodes(pub Vec<String>);
 impl AccountHomeNodes {
     const URI: &'static str = "/v2/account/home/nodes";
 
+    /// Returns a list of home nodes unlocked by the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of home nodes unlocked by the account of the current
+    /// access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountHomeNodes;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let nodes = AccountHomeNodes::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountHomeNodes;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let nodes = AccountHomeNodes::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -471,6 +845,9 @@ impl AccountHomeNodes {
     }
 }
 
+/// A list of items stored in the shared inventory slots of an account.
+///
+/// A `None` value indicates an empty slot.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AccountInventory(pub Vec<Option<InventoryItem>>);
@@ -478,6 +855,46 @@ pub struct AccountInventory(pub Vec<Option<InventoryItem>>);
 impl AccountInventory {
     const URI: &'static str = "/v2/account/inventory";
 
+    /// Returns a list of items stored in the shared inventory slots of the currently authenticated
+    /// account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns a list of item stored in the shared inventory slots of the
+    /// account of the current access token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountInventory;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let inventory = AccountInventory::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountInventory;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let inventory = AccountInventory::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,
@@ -497,11 +914,51 @@ pub struct InventoryItem {
     pub binding: ItemBinding,
 }
 
+/// The current luck value of an account.
 pub struct AccountLuck(pub u64);
 
 impl AccountLuck {
     const URI: &'static str = "/v2/account/luck";
 
+    /// Returns the unlocked luck value of the currently authenticated account.
+    ///
+    /// # Authentication
+    ///
+    /// This endpoint requires authentication and returns an [`Error`] if no access token is set.
+    /// When authenticated it returns unlocked luck value of the account of the current access
+    /// token.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::account::AccountLuck;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let luck = AccountLuck::get(&client).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::account::AccountLuck;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// # let token = "";
+    /// let client: Client = Client::builder().access_token(token).into();
+    /// let luck = AccountLuck::get(&client)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Error`]: struct@crate::Error
+    /// [`blocking`]: crate::blocking
     pub fn get<C>(client: &C) -> C::Result
     where
         C: ClientExecutor<Self>,

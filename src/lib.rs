@@ -90,18 +90,25 @@ impl Builder {
         self
     }
 
+    /// Sets the prefered [`Language`] for this `Client`.
+    #[inline]
     pub fn language(mut self, language: Language) -> Self {
         self.language = language;
         self
     }
 }
 
+/// A client used to make requests to the API.
+///
+/// This trait is sealed and cannot be implemented.
 pub trait ClientExecutor<T>: private::Sealed
 where
     T: DeserializeOwned,
 {
+    /// The return type of this client.
     type Result;
 
+    /// Sends a requests returning the client's return type.
     fn send(&self, request: RequestBuilder) -> Self::Result;
 }
 
@@ -121,10 +128,25 @@ impl From<Builder> for Client {
 /// An alias for `Result<T, Error>`.
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// An error that may occur when making API requests.
 #[derive(Debug, Error)]
 #[error(transparent)]
 pub struct Error {
     kind: ErrorKind,
+}
+
+impl Error {
+    /// Returns `true` if this error occured while making a HTTP request.
+    #[inline]
+    pub fn is_http(&self) -> bool {
+        matches!(self.kind, ErrorKind::Http(_))
+    }
+
+    /// Returns `true` if this error occured while deserializing json.
+    #[inline]
+    pub fn is_json(&self) -> bool {
+        matches!(self.kind, ErrorKind::Json(_))
+    }
 }
 
 impl Error {
