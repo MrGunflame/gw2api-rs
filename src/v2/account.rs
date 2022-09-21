@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::fmt::{self, Formatter};
+use std::num::NonZeroU8;
 
 use chrono::{DateTime, Utc};
 use serde::de::{Error, MapAccess, SeqAccess, Visitor};
@@ -1088,5 +1089,348 @@ impl<'de> Deserialize<'de> for AccountLuck {
         }
 
         deserializer.deserialize_seq(LuckVisitor)
+    }
+}
+
+/// A list of legendary items unlocked in the account armory.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountLegendaryArmory(Vec<LegendaryArmoryItem>);
+
+impl AccountLegendaryArmory {
+    const URI: &'static str = "/v2/account/legendaryarmory";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// An item in unlocked in the legendary armory.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LegendaryArmoryItem {
+    /// The id of the legendary item.
+    pub id: u64,
+    /// The number of items unlocked. This value is in the range of 1 to 4.
+    pub count: NonZeroU8,
+}
+
+/// A list of unlocked mail carriers.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMailCarriers(pub Vec<u64>);
+
+impl AccountMailCarriers {
+    const URI: &'static str = "/v2/account/mailcarriers";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMapChests(Vec<String>);
+
+impl AccountMapChests {
+    const URI: &'static str = "/v2/account/mapchests";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked masteries.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMasteries(pub Vec<AccountMastery>);
+
+impl AccountMasteries {
+    const URI: &'static str = "/v2/account/masteries";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A single unlocked mastery.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMastery {
+    /// The id of the mastery track.
+    pub id: u64,
+    /// The unlocked level of the mastery track.
+    pub level: u8,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMasteryPoints {
+    pub totals: Vec<RegionMasteryPoints>,
+    pub unlocked: Vec<u64>,
+}
+
+impl AccountMasteryPoints {
+    const URI: &'static str = "/v2/account/mastery/points";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RegionMasteryPoints {
+    /// The mastery region.
+    pub region: String,
+    /// The number of mastery points spent in mastery tracks.
+    pub spent: u64,
+    /// The number of mastery points unlocked.
+    pub earned: u64,
+}
+
+/// The account's material storage.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMaterials(Vec<AccountMaterial>);
+
+impl AccountMaterials {
+    const URI: &'static str = "/v2/account/materials";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A material slot in the account's material storage.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMaterial {
+    /// The id of the item.
+    pub id: u64,
+    /// The id of the category this item belongs to.
+    pub category: u8,
+    /// The binding of the item.
+    pub binding: Option<ItemBinding>,
+    /// The number of items of this material stored.
+    pub count: u16,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMinis(pub Vec<u64>);
+
+impl AccountMinis {
+    const URI: &'static str = "/v2/account/minis";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked mount skins.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMountSkins(pub Vec<u64>);
+
+impl AccountMountSkins {
+    const URI: &'static str = "/v2/account/mounts/skins";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked mount types.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountMountTypes(pub Vec<String>);
+
+impl AccountMountTypes {
+    const URI: &'static str = "/v2/account/mounts/types";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked novelties.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountNovelties(pub Vec<u64>);
+
+impl AccountNovelties {
+    const URI: &'static str = "/v2/account/novelties";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked outfits.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountOutfits(pub Vec<u64>);
+
+impl AccountOutfits {
+    const URI: &'static str = "/v2/account/outfits";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of account-wide progression.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountProgression(pub Vec<AccountProgressionItem>);
+
+impl AccountProgression {
+    const URI: &'static str = "/v2/account/progression";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountProgressionItem {
+    /// The name of the progression item.
+    pub id: String,
+    /// The value of the progression item.
+    pub value: u64,
+}
+
+/// A list of unlocked PvP heroes.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountPvPHeroes(pub Vec<u64>);
+
+impl AccountPvPHeroes {
+    const URI: &'static str = "/v2/account/pvp/heroes";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of raid encounters completed since weekly reset.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountRaids(pub Vec<String>);
+
+impl AccountRaids {
+    const URI: &'static str = "/v2/account/raids";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked recipes.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountRecipes(pub Vec<u64>);
+
+impl AccountRecipes {
+    const URI: &'static str = "/v2/account/recipes";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked skins.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountSkins(pub Vec<u64>);
+
+impl AccountSkins {
+    const URI: &'static str = "/v2/account/skins";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of unlocked titles.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountTitles(pub Vec<u64>);
+
+impl AccountTitles {
+    const URI: &'static str = "/v2/account/titles";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A list of currencies in an account's wallet.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountWallet(pub Vec<AccountCurrency>);
+
+impl AccountWallet {
+    const URI: &'static str = "/v2/account/wallet";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
+    }
+}
+
+/// A currency in an account's wallet.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountCurrency {
+    /// The id of the currency.
+    pub id: u64,
+    /// The amount of the currency.
+    pub value: u64,
+}
+
+/// A list of world bosses completed since daily reset.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccountWorldBosses(pub Vec<String>);
+
+impl AccountWorldBosses {
+    const URI: &'static str = "/v2/account/worldbosses";
+
+    pub fn get<C>(client: &C) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        client.send(RequestBuilder::new(Self::URI).authenticated(Authentication::Required))
     }
 }

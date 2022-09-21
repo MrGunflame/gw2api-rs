@@ -4,7 +4,11 @@ mod account {
     use gw2api_rs::v2::account::{
         Account, AccountAchievements, AccountBank, AccountDailyCrafting, AccountDungeons,
         AccountDyes, AccountFinishers, AccountGliders, AccountHomeCats, AccountHomeNodes,
-        AccountInventory, AccountLuck,
+        AccountInventory, AccountLegendaryArmory, AccountLuck, AccountMailCarriers,
+        AccountMapChests, AccountMasteries, AccountMasteryPoints, AccountMaterials, AccountMinis,
+        AccountMountSkins, AccountMountTypes, AccountNovelties, AccountOutfits, AccountProgression,
+        AccountPvPHeroes, AccountRaids, AccountRecipes, AccountSkins, AccountTitles, AccountWallet,
+        AccountWorldBosses,
     };
 
     use crate::support::CLIENT;
@@ -67,6 +71,101 @@ mod account {
     #[test]
     fn test_account_luck() {
         AccountLuck::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_legendary_armory() {
+        AccountLegendaryArmory::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_mail_carriers() {
+        AccountMailCarriers::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_map_chests() {
+        AccountMapChests::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_masteries() {
+        AccountMasteries::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_mastery_points() {
+        AccountMasteryPoints::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_materials() {
+        AccountMaterials::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_minis() {
+        AccountMinis::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_mount_skins() {
+        AccountMountSkins::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_mount_types() {
+        AccountMountTypes::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_novelties() {
+        AccountNovelties::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_outfits() {
+        AccountOutfits::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_progression() {
+        AccountProgression::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_pvp_heroes() {
+        AccountPvPHeroes::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_raids() {
+        AccountRaids::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_recipes() {
+        AccountRecipes::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_skins() {
+        AccountSkins::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_titles() {
+        AccountTitles::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_wallet() {
+        AccountWallet::get(&*CLIENT).unwrap();
+    }
+
+    #[test]
+    fn test_account_world_bosses() {
+        AccountWorldBosses::get(&*CLIENT).unwrap();
     }
 }
 
