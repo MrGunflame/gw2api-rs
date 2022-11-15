@@ -9,6 +9,66 @@ pub struct Guild {
     pub name: String,
     pub tag: String,
     pub emblem: GuildEmblem,
+    // Avaliable with leader token.
+    pub level: Option<u8>,
+    pub motd: Option<String>,
+    pub influence: Option<u64>,
+    pub aetherium: Option<u64>,
+    pub favor: Option<u64>,
+    pub member_count: Option<u16>,
+    pub member_capacity: Option<u16>,
+}
+
+impl Guild {
+    /// Returns the guild with the given `id`.
+    pub fn get<C>(client: &C, id: &str) -> C::Result
+    where
+        C: ClientExecutor<Self>,
+    {
+        let uri = format!("/v2/guild/{}", id);
+        client.send(RequestBuilder::new(uri))
+    }
+
+    /// Returns a list of guild ids matching the searched `name`. If no matches are found this
+    /// returns an empty [`Vec`].
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::{Client, Result};
+    /// # use gw2api_rs::v2::guild::Guild;
+    /// #
+    /// # async fn run() -> Result<()> {
+    /// let client = Client::new();
+    /// let guilds = Guild::search(&client, "Covenant Of The Just").await?;
+    /// println!("{:?}", guilds);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Using the [`blocking`] client:
+    ///
+    /// ```no_run
+    /// # use gw2api_rs::Result;
+    /// # use gw2api_rs::blocking::Client;
+    /// # use gw2api_rs::v2::guild::Guild;
+    /// #
+    /// # fn run() -> Result<()> {
+    /// let client = Client::new();
+    /// let guilds = Guild::search(&client, "Covenant Of The Just")?;
+    /// println!("{:?}", guilds);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`blocking`]: crate::blocking
+    pub fn search<C>(client: &C, name: &str) -> C::Result
+    where
+        C: ClientExecutor<Vec<String>>,
+    {
+        let uri = format!("/v2/guild/search?name={}", name);
+        client.send(RequestBuilder::new(uri))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
