@@ -88,6 +88,8 @@ pub struct GuildEmblemSection {
 pub enum GuildEmblemFlag {
     FlipBackgroundHorizontal,
     FlipBackgroundVertical,
+    FlipForegroundHorizontal,
+    FlipForegroundVertical,
 }
 
 /// A list of [`GuildMember`]s.

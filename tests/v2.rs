@@ -295,9 +295,9 @@ mod guild {
         Guild::get(&*CLIENT, GUILD_ID).unwrap();
     }
 
-    #[inline]
+    #[test]
     fn test_guild_search() {
-        let guilds = Guild::search(&*CLIENT, "").unwrap();
+        let guilds = Guild::search(&*CLIENT, GUILD_NAME).unwrap();
         assert_eq!(guilds, [GUILD_ID]);
     }
 
